@@ -12,7 +12,7 @@ import javax.inject.Singleton
 
 @Module
 @InstallIn(SingletonComponent::class)
-interface PoolLayoutUseCaseModule {
+interface PostUseCaseModule {
 
     @Binds
     @Singleton
@@ -34,7 +34,7 @@ interface PoolLayoutUseCaseModule {
 
 @Module
 @InstallIn(SingletonComponent::class)
-object PoolLayoutRepositoryModule {
+object PostRepositoryModule {
 
     @Provides
     @Singleton

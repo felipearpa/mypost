@@ -6,7 +6,7 @@ It's an example app to demonstrate some functionalities of [jsonplaceholder](htt
 
 ### Post
 
-It shows all post from [jsonplaceholder](https://jsonplaceholder.typicode.com/guide/).
+It shows all post from [jsonplaceholder](https://jsonplaceholder.typicode.com/guide/) and all posts are cached in a room database with a policy of one day.
 
 ![Post](images/post.png)
 
@@ -31,6 +31,8 @@ The architecture used is well-known as Layered pattern and it has three layers. 
 
 Source code were made using solid principles and some concepts of clean code. One example of them is the navigation which is controlled by its own classes and it's easy to expand it or remove it.
 
+Some classes use Koroutines and the function to query the post's details is executed in parallel.
+
 ### Data
 
 This layer is in charge to query the rest api services. It includes the models for the responses and the repositories.
@@ -41,7 +43,7 @@ This layer is in charge to manage the business logic like validations, use cases
 
 ### View
 
-This layer is in charge to manage the views that are displayed to the user. The view were made using Jetpack Compose and they have thier own data models.
+This layer is in charge to manage the views that are displayed to the user. The view were made using Jetpack Compose and they have their own data models.
 
 ## Used SDK
 
@@ -50,3 +52,5 @@ This layer is in charge to manage the views that are displayed to the user. The 
 * `androidx.compose.ui:ui`: It's used to display ui views to the user.
 * `androidx.hilt:hilt-navigation-compose`: It's used to navigate through views.
 * `com.google.accompanist:accompanist-swiperefresh`: It's used to permit swipe refresh gesture.
+* `androidx.room:room`: It's used to persist the posts.
+* `androidx.datastore:datastore-preferences`: It's used to persist some preferences.
