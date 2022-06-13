@@ -2,6 +2,7 @@ package com.pipel.mypost.user.mapper
 
 import com.pipel.mypost.address.mapper.AddressMapper
 import com.pipel.mypost.company.mapper.CompanyMapper
+import com.pipel.mypost.type.Email
 import com.pipel.mypost.type.Identifier
 import com.pipel.mypost.type.NonEmptyString
 import com.pipel.mypost.user.data.UserResponse
@@ -15,7 +16,7 @@ object UserMapper {
             id = Identifier(userResponse.id),
             name = NonEmptyString(userResponse.name),
             userName = if (userResponse.userName != null) NonEmptyString(userResponse.userName) else null,
-            email = NonEmptyString(userResponse.email),
+            email = Email(userResponse.email),
             address = AddressMapper.mapFromDataToDomain(userResponse.address),
             phone = NonEmptyString(userResponse.phone),
             website = NonEmptyString(userResponse.website),
