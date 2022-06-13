@@ -35,11 +35,12 @@ private fun AppTopBar(onRemoveAll: () -> Unit) {
 @Composable
 fun PostView(viewModel: PostViewModel) {
     val posts by viewModel.postsFlow.collectAsState(initial = emptyList())
-    val onItemClick = viewModel::navigateToPostDetail
+    val onClickItem = viewModel::navigateToPostDetail
     val onRefresh = viewModel::refresh
     var mustConfirmRemoveAll by remember { mutableStateOf(false) }
     val onRemoveAll = { mustConfirmRemoveAll = true }
     val isLoading by viewModel.isLoadingFlow.collectAsState(initial = false)
+    val onRemoveItem = viewModel::removePost
 
     Scaffold(
         topBar = { AppTopBar(onRemoveAll = onRemoveAll) }
@@ -52,7 +53,8 @@ fun PostView(viewModel: PostViewModel) {
         PostList(
             posts = posts,
             onRefresh = onRefresh,
-            onItemClick = onItemClick,
+            onClickItem = onClickItem,
+            onRemoveItem = onRemoveItem,
             modifier = Modifier.gesturesDisabled(isLoading)
         )
 
@@ -61,7 +63,7 @@ fun PostView(viewModel: PostViewModel) {
                 onDismissRequest = { mustConfirmRemoveAll = false },
                 onConfirmRequest = {
                     mustConfirmRemoveAll = false
-                    viewModel.removeAll()
+                    viewModel.removeAllPosts()
                 })
         }
     }
@@ -99,7 +101,8 @@ private fun ConfirmRemoveAll(
 fun PostList(
     posts: List<PostModel>,
     onRefresh: () -> Unit,
-    onItemClick: (Int) -> Unit,
+    onClickItem: (Int) -> Unit,
+    onRemoveItem: (Int) -> Unit,
     modifier: Modifier = Modifier
 ) {
     val swipeRefreshState = rememberSwipeRefreshState(false)
@@ -107,8 +110,13 @@ fun PostList(
     SwipeRefresh(state = swipeRefreshState, onRefresh = { onRefresh() }, modifier = modifier) {
         LazyColumn(contentPadding = PaddingValues(8.dp)) {
             items(posts) { post ->
-                PostItem(post = post, onItemClick = onItemClick)
-                Divider(modifier = Modifier.padding(top = 4.dp))
+                key(post.id) {
+                    PostItem(
+                        post = post,
+                        onClick = { onClickItem(post.id) },
+                        onRemove = { onRemoveItem(post.id) })
+                    Divider()
+                }
             }
         }
     }
@@ -118,6 +126,10 @@ fun PostList(
 @Composable
 private fun PostListPreview() {
     MyPostTheme {
-        PostList(posts = postsModelsForPreview(), onRefresh = {}, onItemClick = {})
+        PostList(
+            posts = postsModelsForPreview(),
+            onRefresh = {},
+            onClickItem = {},
+            onRemoveItem = {})
     }
 }

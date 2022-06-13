@@ -5,6 +5,7 @@ import androidx.lifecycle.viewModelScope
 import com.pipel.mypost.post.detail.route.PostDetailRoute
 import com.pipel.mypost.post.mapper.PostMapper
 import com.pipel.mypost.post.useCase.GetPostsUseCase
+import com.pipel.mypost.post.useCase.RemovePostUseCase
 import com.pipel.mypost.post.useCase.RemovePostsUseCase
 import com.pipel.mypost.post.view.PostModel
 import com.pipel.mypost.route.RouteNavigator
@@ -18,6 +19,7 @@ import javax.inject.Inject
 @HiltViewModel
 class PostViewModel @Inject constructor(
     private val getPostsUseCase: GetPostsUseCase,
+    private val removePostUseCase: RemovePostUseCase,
     private val removePostsUseCase: RemovePostsUseCase,
     private val routerNavigator: RouteNavigator
 ) :
@@ -51,7 +53,14 @@ class PostViewModel @Inject constructor(
         _postsFlow.value = getPostsUseCase.execute().map(PostMapper::mapFromDomainToView)
     }
 
-    fun removeAll() {
+    fun removePost(postId: Int) {
+        viewModelScope.launch {
+            removePostUseCase.execute(postId)
+            _postsFlow.value = _postsFlow.value.filter { post -> post.id != postId }
+        }
+    }
+
+    fun removeAllPosts() {
         viewModelScope.launch {
             _isLoadingFlow.value = true
             removePostsUseCase.execute(_postsFlow.value.map { post -> post.id })
