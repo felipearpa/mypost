@@ -5,6 +5,7 @@ import androidx.lifecycle.viewModelScope
 import com.pipel.mypost.post.detail.route.PostDetailRoute
 import com.pipel.mypost.post.mapper.PostMapper
 import com.pipel.mypost.post.useCase.GetPostsUseCase
+import com.pipel.mypost.post.useCase.RemovePostsUseCase
 import com.pipel.mypost.post.view.PostModel
 import com.pipel.mypost.route.RouteNavigator
 import dagger.hilt.android.lifecycle.HiltViewModel
@@ -17,6 +18,7 @@ import javax.inject.Inject
 @HiltViewModel
 class PostViewModel @Inject constructor(
     private val getPostsUseCase: GetPostsUseCase,
+    private val removePostsUseCase: RemovePostsUseCase,
     private val routerNavigator: RouteNavigator
 ) :
     ViewModel(), RouteNavigator by routerNavigator {
@@ -25,19 +27,36 @@ class PostViewModel @Inject constructor(
     val postsFlow: Flow<List<PostModel>>
         get() = _postsFlow.asStateFlow()
 
+    private val _isLoadingFlow: MutableStateFlow<Boolean> = MutableStateFlow(false)
+    val isLoadingFlow: Flow<Boolean>
+        get() = _isLoadingFlow.asStateFlow()
+
     init {
-        load()
+        viewModelScope.launch {
+            load()
+        }
     }
 
     fun navigateToPostDetail(postId: Int) {
         navigate(PostDetailRoute.getRoute(postId))
     }
 
-    fun refresh() = load()
-
-    private fun load() {
+    fun refresh() {
         viewModelScope.launch {
-            _postsFlow.value = getPostsUseCase.execute().map(PostMapper::mapFromDomainToView)
+            load()
+        }
+    }
+
+    private suspend fun load() {
+        _postsFlow.value = getPostsUseCase.execute().map(PostMapper::mapFromDomainToView)
+    }
+
+    fun removeAll() {
+        viewModelScope.launch {
+            _isLoadingFlow.value = true
+            removePostsUseCase.execute(_postsFlow.value.map { post -> post.id })
+            _postsFlow.value = emptyList()
+            _isLoadingFlow.value = false
         }
     }
 

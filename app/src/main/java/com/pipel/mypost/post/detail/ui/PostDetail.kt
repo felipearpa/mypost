@@ -16,15 +16,18 @@ import com.pipel.mypost.post.detail.view.PostDetailModel
 import com.pipel.mypost.user.view.UserModel
 
 @Composable
-private fun AppTopBar(onNavigationClick: () -> Unit) {
-    TopAppBar(title = { Text(text = "MyPost") }, elevation = 0.dp, navigationIcon = {
-        IconButton(onClick = { onNavigationClick() }) {
-            Icon(
-                painter = painterResource(id = R.drawable.ic_baseline_arrow_back_24),
-                contentDescription = "Back to posts"
-            )
-        }
-    })
+private fun AppTopBar(onNavigation: () -> Unit) {
+    TopAppBar(
+        title = { Text(text = "MyPost") },
+        elevation = 0.dp,
+        navigationIcon = {
+            IconButton(onClick = { onNavigation() }) {
+                Icon(
+                    painter = painterResource(id = R.drawable.ic_baseline_arrow_back_24),
+                    contentDescription = "Back to posts"
+                )
+            }
+        })
 }
 
 @Composable
@@ -33,7 +36,7 @@ fun PostDetailView(viewModel: PostDetailViewModel) {
     val onNavigationClick = viewModel::navigateUp
 
     Scaffold(
-        topBar = { AppTopBar(onNavigationClick = onNavigationClick) }
+        topBar = { AppTopBar(onNavigation = onNavigationClick) }
     ) {
         postDetail?.let { nonNullPostDetail ->
             PostDetail(postDetail = nonNullPostDetail)

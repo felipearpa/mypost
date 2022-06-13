@@ -1,10 +1,7 @@
 package com.pipel.mypost.post.di
 
 import com.pipel.mypost.post.data.PostRepository
-import com.pipel.mypost.post.useCase.DefaultGetPostUseCase
-import com.pipel.mypost.post.useCase.DefaultGetPostsUseCase
-import com.pipel.mypost.post.useCase.GetPostUseCase
-import com.pipel.mypost.post.useCase.GetPostsUseCase
+import com.pipel.mypost.post.useCase.*
 import dagger.Binds
 import dagger.Module
 import dagger.Provides
@@ -24,6 +21,14 @@ interface PoolLayoutUseCaseModule {
     @Binds
     @Singleton
     fun provideGetPostUseCase(impl: DefaultGetPostUseCase): GetPostUseCase
+
+    @Binds
+    @Singleton
+    fun provideRemovePostUseCase(impl: DefaultRemovePostUseCase): RemovePostUseCase
+
+    @Binds
+    @Singleton
+    fun provideRemovePostsUseCase(impl: DefaultRemovePostsUseCase): RemovePostsUseCase
 
 }
 

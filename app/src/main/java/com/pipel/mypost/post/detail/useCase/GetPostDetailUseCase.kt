@@ -4,6 +4,7 @@ import com.pipel.mypost.comment.useCase.GetCommentsUseCase
 import com.pipel.mypost.post.detail.domain.PostDetail
 import com.pipel.mypost.post.useCase.GetPostUseCase
 import com.pipel.mypost.user.useCase.GetUserUseCase
+import kotlinx.coroutines.Dispatchers
 import kotlinx.coroutines.async
 import kotlinx.coroutines.coroutineScope
 import javax.inject.Inject
@@ -23,8 +24,10 @@ class DefaultGetPostDetailUseCase @Inject constructor(
     override suspend fun execute(postId: Int): PostDetail =
         coroutineScope {
             val post = getPostUseCase.execute(postId = postId)
-            val authorDeferred = async { getUserUseCase.execute(userId = post.userId.value) }
-            val commentsDeferred = async { getCommentsUseCase.execute(postId = post.id.value) }
+            val authorDeferred =
+                async(context = Dispatchers.IO) { getUserUseCase.execute(userId = post.userId.value) }
+            val commentsDeferred =
+                async(context = Dispatchers.IO) { getCommentsUseCase.execute(postId = post.id.value) }
             return@coroutineScope PostDetail(
                 post = post,
                 author = authorDeferred.await(),
