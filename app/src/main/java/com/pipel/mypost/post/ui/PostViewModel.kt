@@ -2,6 +2,8 @@ package com.pipel.mypost.post.ui
 
 import androidx.lifecycle.ViewModel
 import androidx.lifecycle.viewModelScope
+import com.pipel.mypost.cache.Cache
+import com.pipel.mypost.cache.DailyCache
 import com.pipel.mypost.post.database.useCase.AddPostsDatabaseUseCase
 import com.pipel.mypost.post.database.useCase.GetAllPostsDatabaseUseCase
 import com.pipel.mypost.post.database.useCase.RemoveAllPostsDatabaseUseCase
@@ -15,7 +17,10 @@ import com.pipel.mypost.post.view.PostModel
 import com.pipel.mypost.route.RouteNavigator
 import com.pipel.mypost.store.DataStore
 import dagger.hilt.android.lifecycle.HiltViewModel
-import kotlinx.coroutines.flow.*
+import kotlinx.coroutines.flow.Flow
+import kotlinx.coroutines.flow.MutableStateFlow
+import kotlinx.coroutines.flow.asStateFlow
+import kotlinx.coroutines.flow.distinctUntilChanged
 import kotlinx.coroutines.launch
 import java.util.*
 import javax.inject.Inject
@@ -41,23 +46,30 @@ class PostViewModel @Inject constructor(
     val isLoadingFlow: Flow<Boolean>
         get() = _isLoadingFlow.asStateFlow()
 
+    private val cache: Cache<List<Post>>
+
     init {
-        viewModelScope.launch {
-            store.getCacheDateTimeFlow().distinctUntilChanged().collectLatest { cacheDateTime ->
-                if (mustLoadFromService(cacheDateTime)) {
-                    loadFromServiceAndCache()
-                } else {
-                    loadFromDatabase()
-                }
+        cache = DailyCache(
+            onLoad = { posts ->
+                _postsFlow.value = posts.map(PostMapper::mapFromDomainToView)
+            },
+            cacheDateTimeFlow = store.getCacheDateTimeFlow().distinctUntilChanged(),
+            numberOfDays = 1,
+            loadFromService = {
+                getPostsUseCase.execute()
+            },
+            loadFromDatabase = {
+                getAllPostsDatabaseUseCase.execute()
+            },
+            cache = { posts ->
+                cachePosts(posts)
             }
+        )
+
+        viewModelScope.launch {
+            cache.load()
         }
     }
-
-    private fun mustLoadFromService(cacheDateTime: Date?): Boolean =
-        cacheDateTime == null || isCacheDateTimeGreaterThanOneDay(cacheDateTime)
-
-    private fun isCacheDateTimeGreaterThanOneDay(cacheDateTime: Date) =
-        (Date().time - cacheDateTime.time) / 1000 / 60 / 60 / 24 > 1L
 
     fun navigateToPostDetail(postId: Int) {
         navigate(PostDetailRoute.getRoute(postId))
@@ -65,24 +77,14 @@ class PostViewModel @Inject constructor(
 
     fun refresh() {
         viewModelScope.launch {
-            loadFromServiceAndCache()
+            cache.reload()
         }
-    }
-
-    private suspend fun loadFromServiceAndCache() {
-        val posts = getPostsUseCase.execute()
-        _postsFlow.value = posts.map(PostMapper::mapFromDomainToView)
-        cachePosts(posts)
     }
 
     private suspend fun cachePosts(posts: List<Post>) {
         removeAllPostsDatabaseUseCase.execute()
         addPostsToDatabaseUseCase.execute(posts)
         store.putCacheDateTime(Date())
-    }
-
-    private suspend fun loadFromDatabase() {
-        _postsFlow.value = getAllPostsDatabaseUseCase.execute().map(PostMapper::mapFromDomainToView)
     }
 
     fun removePost(postId: Int) {
