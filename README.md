@@ -38,7 +38,35 @@ was chosen because it permits to be kept easily.
 Source code were made using solid principles and some concepts of clean code. One example of them is
 the navigation which is controlled by its own classes and it's easy to expand it or remove it.
 
-Some classes use coroutines and the function to query the post's details is executed in parallel.
+Some classes use coroutines and the function to query the post's details is executed in parallel
+like this:
+
+```kotlin
+class DefaultGetPostDetailUseCase @Inject constructor(
+    private val getPostUseCase: GetPostUseCase,
+    private val getUserUseCase: GetUserUseCase,
+    private val getCommentsUseCase: GetCommentsUseCase
+) : GetPostDetailUseCase {
+
+    override suspend fun execute(postId: Int): PostDetail =
+        coroutineScope {
+            val post = getPostUseCase.execute(postId = postId)
+            val authorDeferred =
+                async(context = Dispatchers.IO) { getUserUseCase.execute(userId = post.userId.value) }
+            val commentsDeferred =
+                async(context = Dispatchers.IO) { getCommentsUseCase.execute(postId = post.id.value) }
+            return@coroutineScope PostDetail(
+                post = post,
+                author = authorDeferred.await(),
+                comments = commentsDeferred.await()
+            )
+        }
+
+}
+```
+
+The post's author and the post's comments depend of the post, so the query to get author and the
+query to get the comments are executed in parallel but after the post is gotten.
 
 ### Data
 
